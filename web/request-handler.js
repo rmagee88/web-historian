@@ -20,7 +20,7 @@ var getHandler = function(request, response){
   helpers.serveAssets(response, request, lookupPath, function(response, assetData){
     if (assetData){
       response.writeHead(200);
-      response.end(JSON.stringify(assetData));
+      response.end(assetData);
     }else{
       response.writeHead(502);
       response.end('we\'re wrong');
@@ -42,8 +42,8 @@ var postHandler = function(request, response) {
       console.log("DATAAAAAAAAA: " + data);
       helpers.serveAssets(response, request, data.slice(4), function(response, assetData){
         if (assetData){
-          response.writeHead(200);
-          response.end(JSON.stringify(assetData));
+          response.writeHead(302, {'Location': request.url + data.slice(4)});
+          response.end();
         }else{
           response.writeHead(502);
           response.end('we\'re wrong');

@@ -37,7 +37,7 @@ exports.serveAssets = function(res, req, asset, callback) {
           if (error) {
             console.log(error);
           } else {
-            res.end(JSON.stringify(data));
+            res.end(data);
           }
         });
 
