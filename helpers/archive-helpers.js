@@ -29,6 +29,7 @@ exports.initialize = function(pathsObj){
 
 exports.readListOfUrls = function(callback){
   var varray = fs.readFileSync(exports.paths.list, {encoding: 'utf8'}).split("\n");
+  console.log('URLs Read Successfully');
   callback(varray);
 };
 
@@ -64,21 +65,23 @@ exports.isURLArchived = function(url, callback){
 
 
 var addFile = function(urlObj, html){
-  fs.writeFile(exports.paths.archivedSites + '/' + urlObj.url, {encoding: 'utf8'}, html, function(error){
-    console.log(error);
+  fs.writeFile(exports.paths.archivedSites + '/' + urlObj.url, html, {encoding: 'utf8'}, function(error){
+    if (error) console.log('Add file error', error);
   });
   exports.removeFromList(urlObj.url);
 };
 
 exports.downloadUrls = function(urlArray){
   for (var i = 0; i < urlArray.length; i++){
-    httprequest.get(urlArray[i], function(err, response){
-      if (err) {
-        console.log(err);
-      }else{
-        addFile(this, response.buffer.toString());
-      }
-    }.bind({url: urlArray[i]}));
+    if (urlArray[i]){
+      httprequest.get(urlArray[i], function(err, response){
+        if (err) {
+          console.log('Download URL Error ', err);
+        }else{
+          addFile(this, response.buffer.toString());
+        }
+      }.bind({url: urlArray[i]}));
+    }
   }
 };
 
@@ -87,9 +90,9 @@ exports.removeFromList = function(url){
     var newArray = _.filter(varray, function(item){
       if (item !== url){return true;}
     });
-    fs.writeFile(exports.paths.list, {encoding: 'utf8'}, newArray.join('\n'), function(err){
+    fs.writeFile(exports.paths.list, newArray.join('\n'), {encoding: 'utf8'}, function(err){
       if (err) {
-        console.log(err);
+        console.log('Write file error ', err);
       }
     });
   });
