@@ -2,14 +2,8 @@ var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
 var httprequest = require('http-request');
+var sqlite3 = require('sqlite3').verbose();
 
-
-/*
- * You will need to reuse the same paths many times over in the course of this sprint.
- * Consider using the `paths` object below to store frequently used file paths. This way,
- * if you move any files, you'll only need to change your code in one place! Feel free to
- * customize it in any way you wish.
- */
 
 exports.paths = {
   'siteAssets' : path.join(__dirname, '../web/public'),
@@ -17,15 +11,11 @@ exports.paths = {
   'list' : path.join(__dirname, '../archives/sites.txt')
 };
 
-// Used for stubbing paths for jasmine tests, do not modify
 exports.initialize = function(pathsObj){
   _.each(pathsObj, function(path, type) {
     exports.paths[type] = path;
   });
 };
-
-// The following function names are provided to you to suggest how you might
-// modularize your code. Keep it clean!
 
 exports.readListOfUrls = function(callback){
   var varray = fs.readFileSync(exports.paths.list, {encoding: 'utf8'}).split("\n");
@@ -97,6 +87,147 @@ exports.removeFromList = function(url){
     });
   });
 };
+
+
+
+
+
+var openDb = function(callback){
+  var db = new sqlite3.Database('/Users/student/2015-02-web-historian/archives/sitesDatabase.db');
+  db.on('open', function(){
+    callback(db);
+  });
+};
+
+var tableCheck = function() {
+
+  var initTable = function(db) {
+    db.run("CREATE TABLE IF NOT EXISTS SITES (URL TEXT, HTML TEXT)", function(error){
+      if (error) {console.log(error);}
+    });
+  };
+
+  openDb(initTable);
+};
+
+
+exports.db = {};
+
+exports.db.urlExists = function(url, callback){
+  var urlExistsFn = function(db){
+    db.run("SELECT URL FROM SITES WHERE URL =" + url + ";", function(error, rows){
+      db.close();
+      if (rows){
+        callback(true);
+      }else{
+        callback(false);
+      }
+    });
+  };
+  openDb(urlExistsFn);
+};
+
+exports.db.insertUrl = function(url){
+
+  var insertUrlFn = function(db) {
+    console.log('insertUrlFn called.');
+    db.run("INSERT INTO SITES(URL,HTML) VALUES ('" + url + "','null');", function(error){
+      if (error) console.log(error);
+      db.close();
+      console.log('DB closed by insertUrlFn');
+    });
+  };
+
+  openDb(insertUrlFn);
+};
+
+exports.db.insertHTML  = function(url, data){
+
+  var insertHTMLFn = function(db){
+    db.run("UPDATE SITES SET HTML = ? WHERE URL = ?;", data, url, function(error){
+      if (error) console.log(error);
+      db.close();
+    });
+  };
+
+  openDb(insertHTMLFn);
+};
+
+exports.db.fetchHTML = function(url, callback){
+
+  var fetchHTMLFn = function(db){
+    db.all("SELECT HTML FROM SITES WHERE URL =" + url + ";", function(error, row){
+      if (error){
+        console.log(error);
+      }else{
+        callback(row.HTML);
+        db.close();
+      }
+    });
+  };
+
+  openDb(fetchHTMLFn);
+};
+
+exports.db.selectAll = function(){
+
+  var selectAllFn = function(db){
+    db.all("SELECT * FROM SITES;", function(error, rows){
+      if (error){
+        console.log("error: " + error);
+      }else{
+        rows.forEach(function(row) {
+          console.log('url: ', row.URL);
+        });
+        db.close();
+      }
+    });
+  };
+  openDb(selectAllFn);
+};
+
+
+// // test commands
+// exports.db.insertUrl('www.test.com');
+// exports.db.insertUrl('stuffy-stuff');
+// exports.db.selectAll();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
